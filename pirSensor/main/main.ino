@@ -1,67 +1,70 @@
 
-#define pirInput 3
-#define pwmOutput 5
 #define steps 255
-#define calibrationTime 5
+#define scale 100
+#define pwmPin 5
+#define pirPin 3
+#define callibrationTime 6
+#define max_fade_value 200
 
 float R;
 
-void calibration()
+void callibration()
 {
-  Serial.print("Calibrating the sensor");
-  delay(50);
-  for (int i = 0; i < calibrationTime; i++)
+  Serial.print("Callibrating");
+  for (int i = 0; i <= callibrationTime; i++)
   {
-    Serial.print(".");
+    Serial.print(". ");
     delay(1000);
   }
-  Serial.println(" done");
-  Serial.println("SENSOR ACTIVE");
-  delay(50);
+  Serial.println();
+  Serial.println("Sensor active!");
 }
-
-void pwmDown(int *pwm, int *factor)
+void pwmDown(int *pwmValue, int *factor)
 {
   *pwmValue = pow(2, ((*factor) / R)) - 1;
   (*factor)--;
-  delay(10);
+  delay(5);
 }
 
-void reset(int *value1, int *value2)
+void pwmUp(int *pwmValue, int *factor)
 {
-  *value1 = 255;
-  *value2 = 255;
+  *pwmValue = pow(2, ((*factor) / R)) - 1;
+  (*factor)++;
+  delay(5);
 }
 
 void setup()
 {
-  pinMode(pirInput, INPUT);
-  pinMode(pwmOutput, OUTPUT);
-  digitalWrite(pirInput, LOW);
+
+  pinMode(pwmPin, OUTPUT);
+  pinMode(pirPin, INPUT);
   Serial.begin(9600);
-  calibration();
-  R = (steps * log10(2)) / (log10(255));
+  R = (scale * log10(2)) / (log10(255));
+  callibration();
 }
 
 void loop()
 {
-
   static int fadeValue = 0;
   static int step = 0;
 
-  if (digitalRead(pirInput) == HIGH)
+  if (digitalRead(pirPin) == HIGH)
   {
-    analogWrite(pwmOutput, 255);
-    reset(&fadeValue, &step);
-    delay(10);
+    if(fadeValue < max_fade_value){
+      pwmUp(&fadeValue, &step);
+      analogWrite(pwmPin, fadeValue);
+      delay(30);
+    }
+    
+   
   }
-  else if(digitalRead(pirInput) == LOW)
+  else if (digitalRead(pirPin) == LOW)
   {
     if (fadeValue > 0)
     {
       pwmDown(&fadeValue, &step);
-      analogWrite(pwmOutput, fadeValue);
-      delay(10);
+      analogWrite(pwmPin, fadeValue);
+      delay(45);
     }
   }
 }
